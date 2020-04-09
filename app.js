@@ -2,6 +2,7 @@ var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
+// const bodyparser = require('body-parser') //用来解析请求体
 var logger = require('morgan');
 var cors = require("cors"); //  cnpm install cors
 const db = require('./db/connect')
@@ -19,31 +20,16 @@ app.set('view engine', 'jade');
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false })); //这里直接用的express
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
-//解决跨域问题
-// app.use(cors({
-// 　　methods: ["GET", "POST","PUT","DELETE"],
-// 　　alloweHeaders: ["Content-Type", "application/json;charset=utf-8;application/x-www-form-urlencoded"]
-// }));
-// app.all('*',function (req, res, next) {
-//   res.header('Access-Control-Allow-Origin', '*');
-//   res.header('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
-//   res.header('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, OPTIONS');
-
-//   if (req.method == 'OPTIONS') {
-//     res.send(200); /让options请求快速返回/
-//   }
-//   else {
-//     next();
-//   }
-// });
+// app.use(bodyparser.urlencoded({extented:false})) //require body-parser 模块
+// app.use(bodyparser.json())//解析json
 app.use(cors());
 
 
 //router 
+var hazardRouter = require('./routes/hazardRouter')
 var archivesRouter = require('./routes/archivesRouter')
 var usersRouter = require('./routes/usersRouter')
 var indexRouter = require('./routes/indexRouter')
@@ -54,7 +40,8 @@ app.use('/index',indexRouter);
 app.use('/archives', archivesRouter);
 app.use('/users', usersRouter);
 app.use('/roles',rolesRouter);
-app.use('/grade',gradeRouter)
+app.use('/grade',gradeRouter);
+app.use('/hazard',hazardRouter);
 
 
 app.use(function(req, res, next) {

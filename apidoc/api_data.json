@@ -1,9 +1,125 @@
 [
   {
+    "type": "delete",
+    "url": "/archives/deleteLaw",
+    "title": "删除法律法规条目",
+    "group": "Archives",
+    "version": "0.0.0",
+    "filename": "routes/archivesRouter.js",
+    "groupTitle": "Archives",
+    "name": "DeleteArchivesDeletelaw"
+  },
+  {
     "type": "get",
-    "url": "/grade/selectList",
-    "title": "获取评分表的下拉框数据",
-    "name": "GetSelectList",
+    "url": "/archives/getChemiInfo",
+    "title": "获取化学品信息",
+    "group": "Archives",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "choice",
+            "description": "<p>为1取化学品特性数据,为2获取化学品管理列表数据.</p>"
+          }
+        ]
+      }
+    },
+    "version": "0.0.0",
+    "filename": "routes/archivesRouter.js",
+    "groupTitle": "Archives",
+    "name": "GetArchivesGetchemiinfo"
+  },
+  {
+    "type": "get",
+    "url": "/archives/getLaws",
+    "title": "获取法律法规条目",
+    "group": "Archives",
+    "version": "0.0.0",
+    "filename": "routes/archivesRouter.js",
+    "groupTitle": "Archives",
+    "name": "GetArchivesGetlaws"
+  },
+  {
+    "type": "post",
+    "url": "/archives/addChemiInfo",
+    "title": "添加化学品信息",
+    "group": "Archives",
+    "parameter": {
+      "fields": {
+        "MyGroup": [
+          {
+            "group": "MyGroup",
+            "type": "Number",
+            "optional": false,
+            "field": "choice",
+            "description": "<p>为1取化学品特性数据,为2获取化学品管理列表数据.</p>"
+          }
+        ]
+      }
+    },
+    "version": "0.0.0",
+    "filename": "routes/archivesRouter.js",
+    "groupTitle": "Archives",
+    "name": "PostArchivesAddchemiinfo"
+  },
+  {
+    "type": "post",
+    "url": "/archives/addLaw",
+    "title": "添加法律法规条目",
+    "group": "Archives",
+    "version": "0.0.0",
+    "filename": "routes/archivesRouter.js",
+    "groupTitle": "Archives",
+    "name": "PostArchivesAddlaw"
+  },
+  {
+    "type": "post",
+    "url": "/archives/deleteChemiProperty",
+    "title": "删除化学品特性",
+    "group": "Archives",
+    "version": "0.0.0",
+    "filename": "routes/archivesRouter.js",
+    "groupTitle": "Archives",
+    "name": "PostArchivesDeletechemiproperty"
+  },
+  {
+    "type": "post",
+    "url": "/grade/iploadTable/:formData",
+    "title": "Request User information",
+    "name": "上传文件",
+    "group": "Grade",
+    "version": "0.0.0",
+    "filename": "routes/gradeRouter.js",
+    "groupTitle": "Grade"
+  },
+  {
+    "type": "get",
+    "url": "/grade/getFillRecord:fill_userId",
+    "title": "",
+    "name": "填表人获取填写记录",
+    "group": "Grade",
+    "version": "0.0.0",
+    "filename": "routes/gradeRouter.js",
+    "groupTitle": "Grade"
+  },
+  {
+    "type": "get",
+    "url": "/user/:companyId",
+    "title": "Request Enterprise Score",
+    "name": "获取企业评分结果",
+    "group": "Grade",
+    "version": "0.0.0",
+    "filename": "routes/gradeRouter.js",
+    "groupTitle": "Grade"
+  },
+  {
+    "type": "get",
+    "url": "/grade/EvaTSelectData",
+    "title": "",
+    "name": "选择评价表下拉框数据",
     "group": "Grade",
     "success": {
       "examples": [

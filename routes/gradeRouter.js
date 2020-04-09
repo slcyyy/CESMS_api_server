@@ -33,8 +33,8 @@ router.get('/test', (req, res) => {
 })
 
 /**
- * @api {get} /grade/selectList 获取评分表的下拉框数据
- * @apiName GetSelectList
+ * @api {get} /grade/EvaTSelectData
+ * @apiName 选择评价表下拉框数据
  * @apiGroup Grade
  *
  *
@@ -77,8 +77,6 @@ router.get('/test', (req, res) => {
  *   }
  *     }
  *
- *
- * 
  * 
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 404 Not Found
@@ -87,7 +85,7 @@ router.get('/test', (req, res) => {
  *     }
  */
 //返回级联选择框
-router.get('/selectList', async (req, res) => {
+router.get('/EvaTSelectData', async (req, res) => {
 	try {
 		//找到所有的大表名
 		let tableInfo = await ChecklistTitle.find({
@@ -236,6 +234,12 @@ var storage = multer.diskStorage({
 var upload = multer({
 	storage: storage
 })
+
+/**
+ * @api {post} /grade/iploadTable/:formData Request User information
+ * @apiName 上传文件
+ * @apiGroup Grade
+ **/
 router.post('/uploadTable', upload.single('checklist'), (req, res) => {
 	let {
 		filename,
@@ -253,6 +257,25 @@ router.post('/uploadTable', upload.single('checklist'), (req, res) => {
 	})
 })
 
+
+
+//获取评分表的地址
+router.get('/getEvalTableUrl',(req,res)=>{
+	//判断当前页面是否存在评分表
+	let dirs = fs.readdir('public/checklists',(err,data)=>{
+	  if(data.length>0){
+	  	url='public/checklists/评分表.xlsx';
+	  	res.send({url,meta:{msg:'已上传评分表',err:0}})
+	  }
+		else{
+			res.send({meta:{msg:'暂未上传评分表',err:-1}})
+		}
+	})
+	
+})
+
+
+
 //根据Id返回评分表表单
 router.get('/getChecklistData', async (req, res) => {
 	//得到父表的ID
@@ -261,7 +284,6 @@ router.get('/getChecklistData', async (req, res) => {
 		fill_userId,
 		fill_companyId
 	} = req.query
-	console.log(fill_companyId)
 	//找到所有的子表内容
 	try {
 		//用于记录是否有填写记录
@@ -422,10 +444,6 @@ router.post('/saveChecklist', async (req, res) => {
  * @apiName 填表人获取填写记录
  * @apiGroup Grade
  *
- * @apiParam {Number} fill_userId unique ID.
- *
- * @apiSuccess {String} firstname Firstname of the User.
- * @apiSuccess {String} lastname  Lastname of the User.
  */
 router.get('/getFillRecord',async (req,res)=>{
 	try{
@@ -447,5 +465,31 @@ router.get('/getFillRecord',async (req,res)=>{
 	}
 })
 
+
+	
+	//获取公司下拉框列表
+router.get('/getCompanyList',async (req,res)=>{
+	try{
+		let companyInfo = await CompanyInfo.find({}, {
+			_id: 0
+		})
+		res.send({companyInfo,meta: {err: 0,msg: '获取公司信息成功'}})
+	}
+	catch(err){
+		res.send({companyInfo,meta: {err:-1,msg: '获取公司信息失败'}})
+	}
+})	
+	
+/**
+ * @api {get} /user/:companyId Request Enterprise Score
+ * @apiName 获取企业评分结果
+ * @apiGroup Grade
+ *
+ **/
+router.get('/getScore',(req,res)=>{
+	let {companyId} = req.query
+  
+
+})
 
 module.exports = router;

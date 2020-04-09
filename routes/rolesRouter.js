@@ -3,55 +3,25 @@ const router = express.Router()
 const Role = require('../db/models/rolesModel')
 const Power = require('../db/models/powersModel')
 
-router.get('/getRoleList', (req, res) => {
-	Role.find({})
-		.then((data) => {
-			res.send({
-				data,
-				meta: {
-					err: "0",
-					msg: "获取角色列表成功"
-				}
-			})
+router.get('/getRoleList', async (req, res) => {
+	await Role.find({},{_id:0})
+	.then((data) => {
+			res.send({data,meta: {err: "0",msg: "获取角色列表成功"}})
 		})
 		.catch((err) => {
-			res.send({
-				meta: {
-					err: "-1",
-					msg: "获取角色列表失败"
-				}
-			})
+			res.send({meta: {err: "-1",msg: "获取角色列表失败"}})
 		})
 })
 
 router.get('/getRoleById', (req, res) => {
-	let {
-		role_id
-	} = req.query
-	Role.find({
-			role_id
-		}, {
-			role_name: 1,
-			role_desc: 1,
-			role_powers: 1
-		})
+	let {role_id} = req.query
+	Role.find({role_id}, {role_name: 1,role_desc: 1,role_powers: 1,_id:0})
 		.then((data) => {
-			let query = data[0]
-			res.send({
-				query,
-				meta: {
-					err: "0",
-					msg: "id查询角色成功"
-				}
-			})
+			let query = data[0] //因为得到的是一个{[]}类型
+			res.send({query,meta: {err: "0",msg: "id查询角色成功"}})
 		})
 		.catch(err => {
-			res.send({
-				meta: {
-					err: "-1",
-					msg: "id查询角色失败"
-				}
-			})
+			res.send({meta: {err: "-1",msg: "id查询角色失败"}})
 		})
 })
 
@@ -121,14 +91,8 @@ router.get('/getPowersTree', async (req, res) => {
 router.get('/getPowersLeafTreeById', async (req, res) => {
 	let {role_id,role_powers} = req.query
 	try {
-		//返回用户的所有权限
-		//MONGODB返回的数据不可以直接赋值
-		//let {role_powers} = await Role.findOne({role_id},{role_powers:1,_id:0},{lean: true})
 		let role = new RegExp(role_id)
-		let query1 = {
-			power_level: 0,
-			power_pRoleId: role
-		}
+		let query1 = {power_level: 0,power_pRoleId: role}
 		//查询哪些第一级权限(menu)是该用户所有
 		let powerList = await Power.find(query1, {
 			power_id: 1,
@@ -202,8 +166,49 @@ router.get('/getPowersLeafTreeById', async (req, res) => {
 	}
 })
 
-router.put('savePowers',(req,res)=>{
+router.post('/addRole',async (req,res)=>{
+	try{
+		let {addForm} = req.body
+		console.log(addForm)
+		await Role.insertMany(addForm)
+		res.send({meta:{err:0,msg:"添加角色信息成功"}})
+	}
+	catch(e){
+		console.log(e)
+		res.send({meta:{err:-1,msg:"添加角色信息失败"}})
+	}
+})
+
+router.delete('/deleteRole',async (req,res)=>{
+  try{
+		let {role_id} = req.query
+		await Role.deleteMany({role_id})
+		res.send({meta:{msg:'删除角色成功',err:0}})
+  } 
+	catch(err){
+		res.send({meta:{msg:'删除角色失败',err:-1}})
+	}
+})
+
+router.put('/editRole',async (req,res)=>{
+	try{
+		let {editForm} = req.body
+    console.log(editForm)
+		await Role.updateOne({role_id:editForm.role_id},{
+			role_name:editForm.role_name,
+			role_desc:editForm.role_desc
+			})
+		res.send({meta:{err:0,msg:"修改角色信息成功"}})
+	}
+	catch(err){
+		console.log(err)
+		res.send({meta:{err:-1,msg:"修改角色信息失败"}})
+	}
+})
+
+router.put('/savePowers',(req,res)=>{
 	let {role_id,keys} = req.body
+	console.log(keys)
 	Role.update({role_id},{role_powers:keys},(err,raw)=>{
 		if(err) return res.send({meta:{err:-1,msg:'修改角色权限失败'}})
 		res.send({raw,meta:{err:0,msg:'修改角色权限成功'}})

@@ -20,9 +20,7 @@ router.get('/menus',(req,res)=>{
 			children:[
 				{id:21,name:'危险化学品管理',path:'chemicals'},
 				{id:22,name:'法律法规标准规范',path:'laws'},
-				{id:23,name:'组织机构与责任制',path:'orgnization'},
-				{id:24,name:'管理制度',path:'manage'},
-				{id:25,name:'人员培训教育',path:'education'}
+				{id:23,name:'作业安全证',path:'orgnization'},
 			]
 		},
 		{
@@ -31,17 +29,21 @@ router.get('/menus',(req,res)=>{
 			path:'risk',
 			children:[
 				{id:31,name:'重大危险源判断',path:'majorHazard'},
-				{id:32,name:'风险评估',path:'hazardAssess'}
+				{id:32,name:'风险评估',path:'hazardAssess'},
+				{id:33,name:'自定义安全计划表',path:'hazardAssess'}
 			]
 		},
 		{
 			id:4,
-			name:'企业评分',
+			name:'企业评价',
 			path:'grade',
-			children:[
-				{id:41,name:'填写打分表',path:'fillTable'},
-				{id:42,name:'查看打分情况',path:'getScore'},
-				{id:43,name:'导入评分表',path:'dataset'}
+			children:[	
+				{id:41,name:'填写评分表',path:'fillTable'},
+				{id:42,name:'查看填写状态',path:'getFillStatus'},
+				{id:43,name:'导出企业评价内容',path:'getEvaluateContent'}, //specific fill status
+				{id:44,name:'查看评分结果',path:'getScore'}, //last score
+				{id:45,name:'导入评价表',path:'importEvaluateTable'}, 
+				{id:46,name:'导出评价文档',path:'exportEvaluateDoc'} //word
 			]
 		},
 		{

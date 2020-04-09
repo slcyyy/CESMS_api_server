@@ -72,11 +72,8 @@ router.post('/regist',(req,res)=>{
 router.post('/login',(req,res)=>{
 	let {id,pwd} = req.body
 	if(!id || !pwd ) return  res.send({err:-1,msg:'登录参数传递错误'})
-	// if(codes[email] != code){
-	// 	 return res.send({err:-1,msg:'验证码错误'})
-	// }
 	
- //判断邮箱和密码是否正确
+ //判断密码是否正确
 	User.find({user_id:id,user_pwd:pwd})
 	.then((data)=>{
 		//data是一个数组类型
@@ -84,8 +81,7 @@ router.post('/login',(req,res)=>{
 			let payload = {id,pwd}
 			let secret = 'EditByLuo'
 			let token = jwt.sign(payload,secret)
-			console.log(token)
-			res.send({meta:{err:0,msg:'login ok'},id,token})
+			res.send({meta:{err:0,msg:'login ok'},id,token,roleId:data[0].user_roleId})
 		}
 		else{
 			 res.send({meta:{err:-1,msg:'email or pwd is wrong'}})
@@ -96,22 +92,6 @@ router.post('/login',(req,res)=>{
 	})
 })
 
-//send mail 是一个ajax接口
-router.post('/getMailCode',(req,res)=>{
-	let {email} = req.body
-  let code = Math.floor(Math.random()*(9999-1000))+1000; //取整,math.random从0到1
-  console.log(code)
-	codes[email] = code //全局的
-	console.log(codes)
- //封装成一个promise对象,因为是异步操作,不然没法判断
-	Mail.send(email,code)
-	.then((msg)=>{
-		res.send(msg)
-	})
-	.catch((err)=>{
-		res.send(err)
-	})
-})
 
 //通过工号删除
 router.post('/delbyID',(req,res)=>{
@@ -150,18 +130,18 @@ router.post('/getUserList',async (req,res)=>{
 	
 	function queryInfo(query,data){
 		User.countDocuments({}, function (err, count) {
-			if (err) return console.log(err)
+			if (err) return ;
 			total = count
 		});
-		User.find(query,{user_id:1,user_name:1,user_roleId:1,user_state:1,_id:0}).limit(Number(pageSize)).skip(Number((pageNum-1)*pageSize))
+		User.find(query,{user_id:1,user_name:1,user_roleId:1,user_apartment:1,_id:0}).limit(Number(pageSize)).skip(Number((pageNum-1)*pageSize))
 		.then((users)=>{
 			for(i=0;i<users.length;i++){
 				data.push({
 					_id:users[i]._id,
 					user_id:users[i].user_id,
 					user_name:users[i].user_name,
-					user_state:users[i].user_state,
-			    user_roleName:""
+			    user_roleName:"",
+					user_apartment:users[i].user_apartment
 				})
 				for(j=0;j<roles.length;j++){
 					let t = users[i]['user_roleId'].indexOf(((String)(roles[j]['role_id'])))
@@ -176,11 +156,9 @@ router.post('/getUserList',async (req,res)=>{
 					}
 				}
 			}
-			console.log(data)
 			 res.send({pageSize,pageNum,total,data,meta:{err:"0",msg:"获取用户列表成功"}})
 		})
 		.catch(err=>{
-			console.log(err)
 			 res.send({meta:{err:"-1",msg:"获取用户列表失败"}})
 		})
 	}
@@ -208,27 +186,24 @@ router.put('/stateChange',(req,res)=>{
 
 //添加用户
 router.post('/addUser',(req,res)=>{
-	let {user_id,user_name,user_pwd,user_email,user_roleId} = req.body
+	let {user_id,user_name,user_pwd,user_apartment,user_roleId} = req.body
 	//res.send之后还是会继续执行
-	
 	User.find({user_id})
 	.then((data)=>{
 		if(data.length>0){
 		  return res.send({meta:{err:-2,msg:'该工号ID已注册'}})
 	  }
 		else{
-			User.insertMany({user_id,user_name,user_pwd,user_email,user_roleId})
+			User.insertMany({user_id,user_name,user_pwd,user_apartment,user_roleId})
 			.then((data)=>{
 				res.send({meta:{err:0,msg:'添加用户成功'}})
 			})
 			.catch((err)=>{
-				console.log(err)
 				res.send({meta:{err:-1,msg:'添加用户失败'}})
 			 })
 		}
 	})
 	.catch((err)=>{
-		console.log(err)
 		res.send({meta:{err:-1,msg:'查询是否注册用户失败'}})
 	 })
 })
@@ -237,7 +212,6 @@ router.post('/addUser',(req,res)=>{
 router.get('/getUserById',(req,res)=>{
 	console.log(req.query)
 	let {user_id} = req.query
-	console.log(user_id)
 	User.find({user_id},{user_id:1,user_name:1,user_roleId:1,user_state})
 	.then((data)=>{
 		let query = data[0]
@@ -249,14 +223,24 @@ router.get('/getUserById',(req,res)=>{
 	})
 })
 
+router.put('/editUser',async (req,res)=>{
+	try{
+		let {editForm} = req.body
+		await User.updateOne({user_id:editForm.user_id},editForm)
+		res.send({meta:{err:0,msg:'修改用户成功'}})
+	}
+	catch(e){
+		res.send({meta:{err:-1,msg:'修改用户失败'}})
+	}
+})
+
 router.delete('/deleteUser',(req,res)=>{
-	let {user_id} = req.body
+	let {user_id} = req.query
 	User.deleteMany({user_id})
 	.then((data)=>{
 		res.send({meta:{msg:'删除用户成功',err:0}})
 	})
 	.catch((err)=>{
-		console.log(err)
 		res.send({meta:{msg:'删除用户失败',err:-1}})
 	})
 })
