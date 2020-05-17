@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
-
+const Role = require('../db/models/rolesModel')
+const Power = require('../db/models/powersModel')
 //获取左侧菜单
 router.get('/menus',(req,res)=>{
 	let menu = [
@@ -58,6 +59,22 @@ router.get('/menus',(req,res)=>{
 		}
 	]
    res.send({meta:{err:0,msg:'get muneList ok'},menu})
+})
+
+
+router.get('/getMenuList',async (req,res)=>{
+	try{
+		let {roleId} = req.query
+		let temp = Role.find({role_id:roleId},{_id:0,role_powers:1})
+		let powers = temp[0].role_powers.split(',')
+		let list = await Power.find({},{_id:0},{lean:true}).sort({power_level:1})
+
+		res.send({menu:first,meta:{err:0,msg:'返回目录列表数据成功'}})
+	}
+	catch(e){
+		console.log(e)
+		res.send({meta:{err:-1}})
+	}
 })
 
 module.exports = router

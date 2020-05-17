@@ -2,7 +2,7 @@ var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
-// const bodyparser = require('body-parser') //用来解析请求体
+const bodyparser = require('body-parser') //用来解析请求体
 var logger = require('morgan');
 var cors = require("cors"); //  cnpm install cors
 const db = require('./db/connect')
@@ -23,8 +23,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false })); //这里直接用的express
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-// app.use(bodyparser.urlencoded({extented:false})) //require body-parser 模块
-// app.use(bodyparser.json())//解析json
+// app.use(bodyparser.urlencoded({extented:false})) //require body-parser 模块  //解析post请求数据
+app.use(bodyparser.json())//解析json
 app.use(cors());
 
 
@@ -35,6 +35,7 @@ var usersRouter = require('./routes/usersRouter')
 var indexRouter = require('./routes/indexRouter')
 var rolesRouter = require('./routes/rolesRouter')
 var gradeRouter = require('./routes/gradeRouter')
+var plansRouter = require('./routes/plansRouter')
 
 app.use('/index',indexRouter);
 app.use('/archives', archivesRouter);
@@ -42,6 +43,7 @@ app.use('/users', usersRouter);
 app.use('/roles',rolesRouter);
 app.use('/grade',gradeRouter);
 app.use('/hazard',hazardRouter);
+app.use('/plans',plansRouter)
 
 
 app.use(function(req, res, next) {

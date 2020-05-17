@@ -1,9 +1,9 @@
 var mongoose = require('mongoose')
 var fillstatusSchema = mongoose.Schema({
 	status_userId:{type:String,required:true},
-  status_companyName:{type:String,required:true},
+  status_companyId:{type:String,required:true},
 	status_tableName:{type:String,required:true},
-	status_state:{type:Boolean,required:true},
+	status_state:{type:Number,required:true},
 	status_time:{type:String,required:true}
 });
 

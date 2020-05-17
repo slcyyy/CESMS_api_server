@@ -5,7 +5,7 @@ var fillrecordsSchema = mongoose.Schema({
 	fill_fTableId:{type:Number,required:true},
 	fill_cTableId:{type:Number,required:true},
   fill_itemId:{type:String,required:true},
-	fill_status:{type:String,required:true},
+	fill_status:{type:String,required:true}, //检查情况
 	fill_question:{type:String,required:true},
 	fill_advice:{type:String,required:true},
 	fill_grade:{type:Number,required:true}

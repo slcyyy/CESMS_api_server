@@ -2,94 +2,51 @@ const express = require('express')
 const router = express.Router()
 const User = require('../db/models/usersModel')
 const Role = require('../db/models/rolesModel')
-//{send:[Function:send]}
-const Mail = require('../utils/mail')
 const jwt = require('jsonwebtoken')
 
-let codes = {} //通过内存保存验证码信息,每一次重新启动时都会清空
 
-//test
-router.post('/test',async (req,res)=>{
-	let a =[{te:'32'},{te:'32'},{te:'32'},{te:'32'},{te:'32'}]
-	a[0].gender = "ndsa"
-	
-	let b=[]
-	//Unhandled promise rejections are deprecated
-	b =a 
-	let t =[]
- const doc = await User.find({});
- for (let i = 0; i < doc.length; i++) {
-	t.push({
-		_id:doc[i]._id,
-		name:doc[i].user_name,
-		new:'fsd'
-	})
-	}
-	res.send(t)
-})
-
-/**
- * @api {get} /user/:name/:pwd/:email/:code Sign up
- * @apiName Register
- * @apiGroup User
- * 
- * @apiParam {String} name Users name.
- * @apiParam {String} pwd Users password.
- * @apiParam {String} email Users unique email.
- * @apiParam {String} roleId Users role.
- * @apiParam {String} code Users code.
- * 
- */
-router.post('/regist',(req,res)=>{
-	let {name,email,pwd,role,code} = req.body
-	if(!email || !pwd || !name || !code || !role) return res.send({err:-1,msg:'注册参数传递错误'})
-	/*
-		es6中假如key和value值是一样的,可以简化:
-		{us:us,ps:ps} === {us,ps}
-		*/
-	 // console.log(typeof(code)) String
-	// console.log(typeof(codes[email])) number
-	if(codes[email] != code){
-		 return res.send({err:-1,msg:'验证码错误'})
-	}
-	User.insertMany({user_name:name,user_email:email,user_pwd:pwd,user_authority})
-	.then((data)=>{
-		res.send({err:0,msg:'register ok'})
-	})
-	.catch((err)=>{
-		res.send({err:0,msg:'注册插入数据失败'})
-   })
-})
-/**
- * @api {get} /user/:email/:pwd Sign in
- * @apiName Login
- * @apiGroup User
- *
- * @apiParam {String} email Users unique email.
- * @apiParam {String} pwd Users password.
- * 
- */
-router.post('/login',(req,res)=>{
-	let {id,pwd} = req.body
-	if(!id || !pwd ) return  res.send({err:-1,msg:'登录参数传递错误'})
-	
- //判断密码是否正确
-	User.find({user_id:id,user_pwd:pwd})
-	.then((data)=>{
-		//data是一个数组类型
-    if(data.length>0){
+//登录
+router.post('/login',async (req,res)=>{
+	try{
+		let {id,pwd} = req.body
+	  let info = await User.find({user_id:id,user_pwd:pwd},{_id:0,user_id:1,user_roleId:1},{lean:true})
+		if(info.length>0){
 			let payload = {id,pwd}
 			let secret = 'EditByLuo'
 			let token = jwt.sign(payload,secret)
-			res.send({meta:{err:0,msg:'login ok'},id,token,roleId:data[0].user_roleId})
+			//用户所拥有的角色ID数组
+			let role_arr = info[0].user_roleId.split(',')
+			//系统内所有的角色与权限的对应信息
+			let role_power = await Role.find({},{_id:0,role_powers:1,role_id:1},{lean:true})
+			//该用户所拥有的权限
+			let powers = ''
+		  for(let j=0;j<role_arr.length;j++){
+			  for(let i=0;i<role_power.length;i++){
+					if(role_power[i].role_id == role_arr[j]){
+						powers+=role_power[i].role_powers+','
+					}
+				}
+			}
+			let arr = powers.split(',')
+			arr.pop()
+			let newArr = []
+			for(var i = 0;i<arr.length;i++){
+			//判断newArr中是否有arr[i]这个元素，如果返回结果为-1（<0）证明新数组newArr中没有这个元素，则把元素添加到新数组中
+			   if(newArr.indexOf(arr[i])<0){
+			     newArr.push(arr[i]);
+			   }
+			}
+			powers = newArr.join(',')
+			res.send({meta:{err:0,msg:'login ok'},id,token,roleId:info[0].user_roleId,powers})
 		}
 		else{
-			 res.send({meta:{err:-1,msg:'email or pwd is wrong'}})
+			res.send({meta:{err:-2,msg:'email or pwd is wrong'}})
 		}
-	})
-	.catch((err)=>{
-		console.log('登录内部错误')
-	})
+	}
+	catch(e){
+	  console.log(e)
+		res.send({meta:{err:-1}})
+	}
 })
 
 
@@ -111,12 +68,16 @@ router.post('/updata',(req,res)=>{
 	let {email,pwd} = req.body
 	User.updateOne({user_email:email},{user_pwd:pwd})
 	.then((data)=>{
-		
+		let payload = {id,pwd}
+		let secret = 'EditByLuo'
+		let token = jwt.sign(payload,secret)
 	})
 	.catch((err)=>{
 		
 	})
 })
+
+
 
 //分页查找用户列表
 router.post('/getUserList',async (req,res)=>{
@@ -131,9 +92,11 @@ router.post('/getUserList',async (req,res)=>{
 	function queryInfo(query,data){
 		User.countDocuments({}, function (err, count) {
 			if (err) return ;
-			total = count
+			total = count	
 		});
-		User.find(query,{user_id:1,user_name:1,user_roleId:1,user_apartment:1,_id:0}).limit(Number(pageSize)).skip(Number((pageNum-1)*pageSize))
+		User.find(query,{user_id:1,user_name:1,user_roleId:1,user_depa:1,_id:0})
+		.limit(Number(pageSize))
+		.skip(Number((pageNum-1)*pageSize))
 		.then((users)=>{
 			for(i=0;i<users.length;i++){
 				data.push({
@@ -141,12 +104,11 @@ router.post('/getUserList',async (req,res)=>{
 					user_id:users[i].user_id,
 					user_name:users[i].user_name,
 			    user_roleName:"",
-					user_apartment:users[i].user_apartment
+					user_depa:users[i].user_depa
 				})
 				for(j=0;j<roles.length;j++){
 					let t = users[i]['user_roleId'].indexOf(((String)(roles[j]['role_id'])))
 					if(t>-1){
-						//用了.就不用中括号不用单引号不用点 就要用中括号和单引号,a[1].province="Jiangsu"这样是添加不了的
 						if(data[i]['user_roleName']==""){
 							data[i]['user_roleName'] = roles[j]['role_name']
 						}
@@ -173,20 +135,10 @@ router.post('/getUserList',async (req,res)=>{
 	}
 })
 
-//用户状态更改
-router.put('/stateChange',(req,res)=>{
-   let {user_id,user_state} = req.body
-	 console.log(user_id,user_state)
-	 let newState = !user_state
-	 User.update({user_id},{user_state:newState},(err,raw)=>{
-		 if(err) return res.send({meta:{err:-1,msg:'修改状态失败'}})
-		 res.send({user_id,newState,meta:{err:0,msg:'修改状态成功'}})
-	 })
-})
 
 //添加用户
 router.post('/addUser',(req,res)=>{
-	let {user_id,user_name,user_pwd,user_apartment,user_roleId} = req.body
+	let {user_id,user_name,user_pwd,user_depa,user_roleId} = req.body
 	//res.send之后还是会继续执行
 	User.find({user_id})
 	.then((data)=>{
@@ -194,7 +146,7 @@ router.post('/addUser',(req,res)=>{
 		  return res.send({meta:{err:-2,msg:'该工号ID已注册'}})
 	  }
 		else{
-			User.insertMany({user_id,user_name,user_pwd,user_apartment,user_roleId})
+			User.insertMany({user_id,user_name,user_pwd,user_depa,user_roleId})
 			.then((data)=>{
 				res.send({meta:{err:0,msg:'添加用户成功'}})
 			})
@@ -208,21 +160,20 @@ router.post('/addUser',(req,res)=>{
 	 })
 })
 
-//根据用户id查询
+//根据用户id查询用户信息
 router.get('/getUserById',(req,res)=>{
-	console.log(req.query)
 	let {user_id} = req.query
-	User.find({user_id},{user_id:1,user_name:1,user_roleId:1,user_state})
+	User.find({user_id},{_id:0})
 	.then((data)=>{
-		let query = data[0]
-		console.log(query)
-		res.send({query,meta:{err:0,msg:'id查询用户成功'}})
-	})
+		let userInfo = data[0]
+		res.send({userInfo,meta:{err:0,msg:'通过ID查询用户信息成功'}})
+	})	
 	.catch((err)=>{
 		res.send({meta:{err:-1,msg:'id查询用户失败'}})
 	})
 })
 
+//修改用户信息
 router.put('/editUser',async (req,res)=>{
 	try{
 		let {editForm} = req.body
@@ -243,5 +194,34 @@ router.delete('/deleteUser',(req,res)=>{
 	.catch((err)=>{
 		res.send({meta:{msg:'删除用户失败',err:-1}})
 	})
+})
+
+//修改密码
+router.put('/changePwd',async (req,res)=>{
+	try{
+     let {accountForm} = req.body
+		 let user_id = accountForm.user_id
+		 await User.updateOne({user_id},{user_pwd:accountForm.pwd})
+		 res.send({meta:{err:0}})
+	}
+	catch(e){
+		res.send({meta:{err:-1}})
+	}
+})
+
+router.post('/forget',async (req,res)=>{
+	try{
+		let {formData} = req.body
+		console.log(formData)
+		let info = await User.find(formData,{_id:0,user_pwd:1}) 
+	  if(info.length<1){
+		   res.send({meta:{err:2,msg:'您的身份信息错误'}})
+		}
+		else
+		   res.send({pwd:info[0].user_pwd,meta:{err:0}})
+	}
+	catch(e){
+		res.send({meta:{err:-1}})
+	}
 })
 module.exports=router
